@@ -5,13 +5,17 @@ import { Link } from "react-router";
 
 function BottomNavigationBar() {
   return (
-    <div className="sticky w-full bottom-0 h-[50px] bg-blue-400">
+    <div className="fixed w-full bottom-0 h-[50px] bg-blue-400">
       <div className="flex justify-between h-full p-2 items-center">
         <Link to={"/home"}>
           <GoHome className="text-2xl text-white" />
         </Link>
-        <CiCirclePlus className="text-2xl text-white" />
-        <IoChatbubblesOutline className="text-2xl text-white" />
+        <Link to={"/new-post"}>
+          <CiCirclePlus className="text-2xl text-white" />
+        </Link>
+        <Link to={"/chats"}>
+          <IoChatbubblesOutline className="text-2xl text-white" />
+        </Link>
       </div>
     </div>
   );

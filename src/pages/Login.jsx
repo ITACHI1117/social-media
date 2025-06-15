@@ -1,17 +1,60 @@
 import { Link, useNavigate } from "react-router";
+import { useLogin } from "../queries/authQueries";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { useEffect } from "react";
 
 function Login() {
   let navigate = useNavigate();
 
-  const handleLogin = () => {
-    navigate("/home");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const { mutate, isPending, isSuccess, error, data, isError } = useLogin();
+
+  const onSubmit = (data) => {
+    mutate(data);
+    // navigate("/home");
   };
+  useEffect(() => {
+    if (isSuccess) {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      navigate("/home");
+    }
+    isSuccess
+      ? toast.success(`Welcome \n ${data}`, {
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        })
+      : error &&
+        toast.error(`${error.message?.data?.errors?.Authentication[0]} `, {
+          autoClose: 5000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "light",
+        });
+    error && console.log(error.message.data.errors.Authentication[0]);
+    data && console.log(data);
+  }, [isSuccess, isError]);
+
   return (
     <>
       <section className="p-6 px-5">
         <div>
           <h1 className="font-bold mb-3 text-2xl">Login</h1>
-          <form className="flex flex-col">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
             <label htmlFor="username">Email</label>
             <input
               className="w-full p-1 border border-gray-300 rounded"
@@ -19,8 +62,11 @@ function Login() {
               id="username"
               name="username"
               placeholder="socialmedia@mail.com"
-              required
+              {...register("email", { required: true })}
             />
+            {errors.email && (
+              <p className="text-red-500">{errors.email.message}</p>
+            )}
             <br />
             <label htmlFor="password">Password</label>
             <input
@@ -29,15 +75,20 @@ function Login() {
               id="password"
               name="password"
               placeholder="password1234"
-              required
+              {...register("password", { required: true })}
             />
+            {errors.password && (
+              <p className="text-red-500">{errors.password.message}</p>
+            )}
             <br />
             <button
-              onClick={handleLogin}
               type="submit"
-              className="bg-blue-400 text-white p-2 rounded"
+              className={`${
+                isPending ? "bg-gray-500" : "bg-blue-400"
+              } text-white p-2 rounded`}
+              disabled={isPending}
             >
-              Login
+              {isPending ? "Loading..." : "Login"}
             </button>
           </form>
         </div>

@@ -5,49 +5,13 @@ import { IoChatbubblesOutline } from "react-icons/io5";
 import { useNavigate } from "react-router";
 import { useMyPosts, usePosts, useUser } from "../queries/userQueries";
 
-function Posts() {
+function MyPosts() {
   const {
     data: myPosts,
     isError: postErrors,
     isSuccess: postSuccess,
-  } = usePosts();
+  } = useMyPosts();
 
-  const posts = [
-    {
-      id: 1,
-      title: "Post 1",
-      content: "This is the content of post 1",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 1,
-        name: "John Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-    {
-      id: 2,
-      title: "Post 2",
-      content:
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum  ",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 2,
-        name: "John Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-    {
-      id: 3,
-      title: "Post 3",
-      content: "This is the content of post 3",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 3,
-        name: "Jane Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-  ];
   const navigate = useNavigate();
   const handleReply = () => {
     navigate("/chat");
@@ -121,4 +85,4 @@ function Posts() {
   );
 }
 
-export default Posts;
+export default MyPosts;

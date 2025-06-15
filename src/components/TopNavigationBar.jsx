@@ -1,8 +1,16 @@
-import profileImg from "../assets/manImage.jpg";
 import { useNavigate } from "react-router";
+import profileImg from "../assets/manImage.jpg";
+import { useUser } from "../queries/userQueries";
+import { useEffect } from "react";
 
 function TopNavigationBar() {
   let navigate = useNavigate();
+
+  const { data: userProfileData, isSuccess } = useUser();
+
+  // useEffect(() => {
+  //   mutate();
+  // }, [isSuccess]);
 
   const handleClick = () => {
     navigate("/profile");
@@ -13,12 +21,20 @@ function TopNavigationBar() {
         onClick={handleClick}
         className="flex items-center gap-2 p-2 w-[50%] cursor-pointer"
       >
-        <img
-          src={profileImg}
-          alt=""
-          className="w-[60px] h-[60px] object-cover rounded-full  border-blue-400 border-3"
-        />
-        <h1 className="font-bold">John Doe</h1>
+        {isSuccess ? (
+          <img
+            src={userProfileData.profileImageUrl}
+            alt=""
+            className="w-[60px] h-[60px] object-cover rounded-full  border-blue-400 border-3"
+          />
+        ) : (
+          <div
+            alt=""
+            className="w-[60px] h-[60px] object-cover rounded-full  border-blue-400 border-3"
+          ></div>
+        )}
+
+        <h1 className="font-bold">{isSuccess && userProfileData.firstname}</h1>
       </div>
     </section>
   );
