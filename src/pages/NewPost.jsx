@@ -1,11 +1,11 @@
 import profileImg from "../assets/manImage.jpg";
 import food from "../assets/food.jpg";
-// import profileImg from "../assets/student.jpg";
 import { IoChatbubblesOutline } from "react-icons/io5";
 import { VscSend } from "react-icons/vsc";
 import { useEffect, useRef, useState } from "react";
-import { LuImagePlus } from "react-icons/lu";
-import { IoChevronBackOutline } from "react-icons/io5";
+import { LuImagePlus, LuX } from "react-icons/lu";
+import { IoChevronBackOutline, IoCloseOutline } from "react-icons/io5";
+import { HiOutlinePhotograph } from "react-icons/hi";
 import { useNavigate } from "react-router";
 import {
   useDeleteImage,
@@ -14,69 +14,37 @@ import {
   useUser,
 } from "../queries/userQueries";
 import { toast } from "react-toastify";
-import { newPost, uploadImage } from "../services/userServices";
 
 function NewPost() {
-  const posts = [
-    {
-      id: 1,
-      title: "Post 1",
-      content: "This is the content of post 1",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 1,
-        name: "John Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-    {
-      id: 2,
-      title: "Post 2",
-      content:
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum  ",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 2,
-        name: "John Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-    {
-      id: 3,
-      title: "Post 3",
-      content: "This is the content of post 3",
-      image: "https://via.placeholder.com/150",
-      user: {
-        id: 3,
-        name: "Jane Doe",
-        profilePicture: "https://via.placeholder.com/50",
-      },
-    },
-  ];
   const [content, setContent] = useState("");
   const [addedImg, setAddedImg] = useState(false);
   const [uploadedImg, setUploadedImg] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const imgInputRef = useRef(null);
-  const [postData, setPostData] = useState({});
+  const textareaRef = useRef(null);
   let navigate = useNavigate();
 
-  const handelImgSelect = () => {
+  const handleImgSelect = () => {
     imgInputRef.current.click();
   };
 
-  const handelImgChange = (e) => {
+  const handleImgChange = (e) => {
     const img = e.target.files[0];
     if (img) {
       console.log(img);
       setAddedImg(true);
       setUploadedImg(img);
+      setImagePreview(URL.createObjectURL(img));
     }
   };
 
-  const handelPost = () => {
-    content.length > 0
-      ? console.log("Post Created")
-      : alert("Please add content");
+  const handleRemoveImage = () => {
+    setAddedImg(false);
+    setUploadedImg(null);
+    setImagePreview(null);
+    if (imgInputRef.current) {
+      imgInputRef.current.value = "";
+    }
   };
 
   // New post query
@@ -104,44 +72,37 @@ function NewPost() {
 
   // Upload Image to cloud
   const Submit = async () => {
+    if (content.length === 0) {
+      toast.error("Please add some content to your post");
+      return;
+    }
+
     if (uploadedImg && content.length > 0) {
       try {
         // Upload image first
         mutate({ file: uploadedImg });
-
-        // Just the URL string
-
-        try {
-          // Create post
-          // Create FormData for post
-        } catch (postError) {
-          // Delete image if post creation fails
-          await deleteImage(data.publicId);
-          console.log("Post failed, image deleted");
-        }
       } catch (error) {
         console.log("Image upload failed:", error);
+        toast.error("Failed to upload image");
       }
     }
   };
 
   // append form data and Post
   useEffect(() => {
-    console.log();
-    const formData = new FormData();
-    isSuccess && formData.append("Caption", content);
-    isSuccess && formData.append("Images", uploadedImg);
-    isSuccess && mutatePost(formData);
-    isSuccess && console.log(data.url);
-    postError && deleteImage(data.publicId);
-    isSuccess && navigate("/home");
-    // deleteImage(data.publicId);
+    if (isSuccess && data) {
+      const formData = new FormData();
+      formData.append("Caption", content);
+      formData.append("Images", uploadedImg);
+      mutatePost(formData);
+      navigate("/home");
+    }
   }, [isSuccess]);
 
   useEffect(() => {
     if (isPostSuccess) {
-      toast.success("Post Sent successfully", {
-        autoClose: 5000,
+      toast.success("Post created successfully!", {
+        autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: false,
         pauseOnHover: true,
@@ -149,11 +110,10 @@ function NewPost() {
         progress: undefined,
         theme: "light",
       });
-
-      // navigate("/home");
+      navigate("/home");
     }
     if (postError) {
-      toast.error("Error Sending Post", {
+      toast.error("Error creating post", {
         autoClose: 5000,
         hideProgressBar: false,
         closeOnClick: false,
@@ -162,95 +122,226 @@ function NewPost() {
         progress: undefined,
         theme: "light",
       });
-      console.log(error);
+      console.log(postError);
+      if (data?.publicId) {
+        deleteImage(data.publicId);
+      }
     }
   }, [isPostSuccess, postError]);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [content]);
+
+  const isLoading = isPending || isPostPending;
+  const canPost = content.trim().length > 0;
+
   return (
-    <>
-      <div className="flex items-center justify-center py-2">
-        <div className="absolute left-5" onClick={() => navigate(-1)}>
-          <IoChevronBackOutline className="text-xl" />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="flex items-center justify-between px-4 py-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <IoChevronBackOutline className="text-xl text-gray-700" />
+          </button>
+
+          <h1 className="text-lg font-semibold text-gray-900">Create Post</h1>
+
+          <button
+            onClick={Submit}
+            disabled={!canPost || isLoading}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+              canPost && !isLoading
+                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Posting...</span>
+              </div>
+            ) : (
+              "Post"
+            )}
+          </button>
         </div>
-        <h1 className="font-bold text-xl">New Post</h1>
       </div>
-      <section className="w-full h-[90%] p-5 mb-50 flex overflow-y-scroll">
-        <div className=" w-full border-b-2 border-blue-100 pb-2 mb-4">
-          <div className="w-full flex gap-3 ">
-            {isUser && (
+
+      {/* Main Content */}
+      <div className="flex-1 p-4">
+        <div className="max-w-2xl mx-auto">
+          {/* User Info */}
+          <div className="flex items-center space-x-3 mb-6">
+            {isUser && userData?.profileImageUrl ? (
               <img
                 src={userData.profileImageUrl}
-                alt=""
-                className="w-[50px] h-[50px] rounded-full object-cover"
+                alt="Profile"
+                className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
               />
-            )}
-
-            <div className="w-full">
-              <input
-                type="file"
-                accept="image/*"
-                ref={imgInputRef}
-                className="hidden"
-                onChange={handelImgChange}
-              />
-              {!addedImg ? (
-                <>
-                  <div
-                    onClick={handelImgSelect}
-                    className="w-[100%] h-[200px] bg-blue-200 flex items-center justify-center"
-                  >
-                    <LuImagePlus className="text-[40px] text-white" />
-                  </div>
-                </>
-              ) : (
-                <img
-                  onClick={handelImgSelect}
-                  src={URL.createObjectURL(uploadedImg)}
-                  alt=""
-                  className="w-[100%] rounded-t object-cover"
-                />
-              )}
-
-              <div
-                className="w-full bg-blue-400 p-2 rounded-b whitespace-pre-wrap break-words text-white"
-                style={{
-                  maxWidth: "100%",
-                  wordWrap: "break-word",
-                  overflowWrap: "break-word",
-                }}
-              >
-                {content}
+            ) : (
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
               </div>
+            )}
+            <div>
+              <h3 className="font-semibold text-gray-900">
+                {isUser && userData
+                  ? `${userData.firstname} ${userData.lastname}`
+                  : "User"}
+              </h3>
+              <p className="text-sm text-gray-500">Share your thoughts...</p>
             </div>
           </div>
+
+          {/* Post Content */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            {/* Text Content */}
+            <div className="p-4">
+              <textarea
+                ref={textareaRef}
+                placeholder="What's on your mind?"
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full resize-none border-none outline-none text-gray-900 placeholder-gray-500 text-lg leading-relaxed min-h-32 max-h-64"
+                style={{ height: "auto" }}
+              />
+            </div>
+
+            {/* Image Preview */}
+            {addedImg && imagePreview && (
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full max-h-96 object-cover"
+                />
+                <button
+                  onClick={handleRemoveImage}
+                  className="absolute top-3 right-3 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full transition-all"
+                >
+                  <IoCloseOutline className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            )}
+
+            {/* Image Upload Area */}
+            {!addedImg && (
+              <div
+                onClick={handleImgSelect}
+                className="border-t border-gray-200 p-8 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <HiOutlinePhotograph className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <h3 className="font-medium text-gray-900 mb-1">Add photos</h3>
+                  <p className="text-sm text-gray-500">
+                    Upload images to make your post more engaging
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Hidden File Input */}
+            <input
+              type="file"
+              accept="image/*"
+              ref={imgInputRef}
+              className="hidden"
+              onChange={handleImgChange}
+            />
+          </div>
+
+          {/* Post Options */}
+          <div className="mt-6 bg-white rounded-xl border border-gray-200 p-4">
+            <h4 className="font-medium text-gray-900 mb-3">Add to your post</h4>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleImgSelect}
+                className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <HiOutlinePhotograph className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Photo</span>
+              </button>
+
+              <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg
+                  className="w-5 h-5 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 3v10a2 2 0 002 2h6a2 2 0 002-2V7M7 7h10M9 11v6m6-6v6"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">Poll</span>
+              </button>
+
+              <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg
+                  className="w-5 h-5 text-yellow-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="text-sm font-medium text-gray-700">
+                  Feeling
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Character Count */}
+          <div className="mt-4 flex justify-between items-center text-sm text-gray-500">
+            <div></div>
+            <span>{content.length}/2000</span>
+          </div>
         </div>
-      </section>
-      <div className="fixed bottom-0 p-3 w-full flex items-center px-3 bg-white gap-3">
-        <div className="w-[90%] bg-blue-100 ">
-          <textarea
-            type="text"
-            placeholder="Type here..."
-            className="w-full outline-none  h-[30px] max-h-[100px] px-2"
-            onChange={(e) => setContent(e.target.value)}
-            value={content}
-            name="content"
-            onInput={(e) => {
-              e.target.style.height = "auto";
-              e.target.style.height = `${e.target.scrollHeight}px`;
-            }}
-          />
-        </div>
-        <button
-          onClick={Submit}
-          disabled={isPostPending}
-          className={`p-3 rounded-full ${
-            isPostPending || isPending ? "bg-gray-400" : "bg-blue-400"
-          }  text-white cursor-pointer`}
-        >
-          <VscSend />
-        </button>
       </div>
-    </>
+
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 flex flex-col items-center space-y-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-700 font-medium">
+              {isPending ? "Uploading image..." : "Creating post..."}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

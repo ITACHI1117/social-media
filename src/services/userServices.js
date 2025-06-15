@@ -17,6 +17,20 @@ async function getUser() {
   }
 }
 
+async function editProfile(data) {
+  try {
+    const response = axiosInstance.put("/UserProfile", data);
+    return response;
+  } catch (err) {
+    console.log(err);
+    console.log(err);
+    throw {
+      success: false,
+      message: err.response,
+    };
+  }
+}
+
 // get my posts
 async function getPosts() {
   try {
@@ -103,4 +117,12 @@ async function newPost(postData) {
   }
 }
 
-export { getUser, getPosts, getMyPosts, newPost, uploadImage, deleteImage };
+export {
+  getUser,
+  editProfile,
+  getPosts,
+  getMyPosts,
+  newPost,
+  uploadImage,
+  deleteImage,
+};

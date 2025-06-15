@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   deleteImage,
+  editProfile,
   getMyPosts,
   getPosts,
   getUser,
@@ -10,6 +11,20 @@ import {
 
 export const useUser = () => {
   return useQuery({ queryKey: [`user`], queryFn: getUser, initialData: [] });
+};
+
+export const useEditProfile = () => {
+  return useMutation({
+    mutationFn: (data) => editProfile(data),
+    onSuccess: (response) => {
+      console.log(response);
+      return response;
+    },
+    onError: (error) => {
+      console.log(error);
+      return error;
+    },
+  });
 };
 
 export const usePosts = () => {

@@ -13,6 +13,7 @@ import ChatsList from "./pages/ChatsList.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import { ProtectedRoute } from "./pages/ProtectedRoute.jsx";
+import EditProfile from "./pages/EditProfile.jsx";
 
 const screenSize = window.innerWidth;
 console.log(screenSize);
@@ -47,6 +48,14 @@ createRoot(document.getElementById("root")).render(
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="edit-profile"
+              element={
+                <ProtectedRoute>
+                  <EditProfile />
                 </ProtectedRoute>
               }
             />
