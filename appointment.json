@@ -1,0 +1,555 @@
+# Complete Appointment System API Specification
+
+## Base URL
+```
+https://api.yourapp.com/v1
+```
+
+## Authentication
+All endpoints require Bearer token authentication:
+```
+Authorization: Bearer <access_token>
+```
+
+---
+
+## 1. Create Appointment
+
+**Method:** `POST`
+**Endpoint:** `/appointments`
+**Content-Type:** `application/json`
+
+**Request Body:**
+```json
+{
+  "doctorId": "doc_123456",
+  "patientId": "pat_789012",
+  "appointmentDate": "2024-12-20",
+  "appointmentTime": "14:30",
+  "duration": 30,
+  "type": "consultation",
+  "complaintPhotos": ["images"],
+  "reason": "Regular checkup",
+  "notes": "Patient experiencing mild headaches",
+  "priority": "normal"
+}
+```
+
+**Success Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "Appointment created successfully",
+  "data": {
+    "id": "apt_345678",
+    "doctorId": "doc_123456",
+    "patientId": "pat_789012",
+    "appointmentDate": "2024-12-20",
+    "appointmentTime": "14:30",
+    "duration": 30,
+    "type": "consultation",
+    "reason": "Regular checkup",
+    "notes": "Patient experiencing mild headaches",
+    "priority": "normal",
+    "status": "scheduled",
+    "createdAt": "2024-12-15T10:30:00Z",
+    "updatedAt": "2024-12-15T10:30:00Z",
+    "doctor": {
+      "id": "doc_123456",
+      "name": "Dr. Sarah Wilson",
+      "specialization": "General Medicine",
+      "avatar": "https://example.com/avatar.jpg"
+    },
+    "patient": {
+      "id": "pat_789012",
+      "name": "John Doe",
+      "email": "john.doe@email.com",
+      "phone": "+1234567890"
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Validation errors
+- `404 Not Found` - Doctor or patient not found
+- `409 Conflict` - Time slot already booked
+- `401 Unauthorized` - Invalid or missing token
+
+---
+
+## 2. Get Appointment by ID
+
+**Method:** `GET`
+**Endpoint:** `/appointments/{appointmentId}`
+
+**Path Parameters:**
+- `appointmentId` (string, required) - The appointment ID
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointment retrieved successfully",
+  "data": {
+    "id": "apt_345678",
+    "doctorId": "doc_123456",
+    "patientId": "pat_789012",
+    "appointmentDate": "2024-12-20",
+    "appointmentTime": "14:30",
+    "duration": 30,
+    "type": "consultation",
+    "complaintPhoto": ["images"],
+    "reason": "Regular checkup",
+    "notes": "Patient experiencing mild headaches",
+    "priority": "normal",
+    "status": "scheduled",
+    "createdAt": "2024-12-15T10:30:00Z",
+    "updatedAt": "2024-12-15T10:30:00Z",
+    "doctor": {
+      "id": "doc_123456",
+      "name": "Dr. Sarah Wilson",
+      "specialization": "General Medicine",
+      "avatar": "https://example.com/avatar.jpg",
+      "email": "dr.sarah@hospital.com",
+      "phone": "+1234567891"
+    },
+    "patient": {
+      "id": "pat_789012",
+      "name": "John Doe",
+      "email": "john.doe@email.com",
+      "phone": "+1234567890",
+      "dateOfBirth": "1990-05-15",
+      "address": "123 Main St, City, State",
+      "medicalRecords": ["...records"]
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `404 Not Found` - Appointment not found
+- `403 Forbidden` - No permission to view this appointment
+
+---
+
+## 3. Update Appointment
+
+**Method:** `PUT`
+**Endpoint:** `/appointments/{appointmentId}`
+
+**Path Parameters:**
+- `appointmentId` (string, required) - The appointment ID
+
+**Request Body:**
+```json
+{
+  "appointmentDate": "2024-12-21",
+  "appointmentTime": "15:00",
+  "duration": 45,
+  "reason": "Follow-up consultation",
+  "notes": "Patient reports improvement in symptoms",
+  "priority": "high"
+}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointment updated successfully",
+  "data": {
+    "id": "apt_345678",
+    "appointmentDate": "2024-12-21",
+    "appointmentTime": "15:00",
+    "duration": 45,
+    "reason": "Follow-up consultation",
+    "notes": "Patient reports improvement in symptoms",
+    "priority": "high",
+    "updatedAt": "2024-12-15T11:45:00Z"
+  }
+}
+```
+
+---
+
+## 4. Cancel Appointment
+
+**Method:** `PATCH`
+**Endpoint:** `/appointments/{appointmentId}/cancel`
+
+**Path Parameters:**
+- `appointmentId` (string, required) - The appointment ID
+
+**Request Body:**
+```json
+{
+  "reason": "Patient emergency",
+  "notifyParties": true
+}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointment cancelled successfully",
+  "data": {
+    "id": "apt_345678",
+    "status": "cancelled",
+    "cancellationReason": "Patient emergency",
+    "cancelledAt": "2024-12-15T12:00:00Z",
+    "cancelledBy": "pat_789012"
+  }
+}
+```
+
+---
+
+## 5. Reschedule Appointment
+
+**Method:** `PATCH`
+**Endpoint:** `/appointments/{appointmentId}/reschedule`
+
+**Path Parameters:**
+- `appointmentId` (string, required) - The appointment ID
+
+**Request Body:**
+```json
+{
+  "newDate": "2024-12-22",
+  "newTime": "10:00",
+  "reason": "Doctor unavailable"
+}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointment rescheduled successfully",
+  "data": {
+    "id": "apt_345678",
+    "appointmentDate": "2024-12-22",
+    "appointmentTime": "10:00",
+    "status": "rescheduled",
+    "rescheduledFrom": {
+      "date": "2024-12-20",
+      "time": "14:30"
+    },
+    "rescheduleReason": "Doctor unavailable",
+    "updatedAt": "2024-12-15T12:15:00Z"
+  }
+}
+```
+
+---
+
+## 6. Get Doctor's Appointments
+
+**Method:** `GET`
+**Endpoint:** `/doctors/{doctorId}/appointments`
+
+**Path Parameters:**
+- `doctorId` (string, required) - The doctor ID
+
+**Query Parameters:**
+- `date` (string, optional) - Filter by specific date (YYYY-MM-DD)
+- `status` (string, optional) - Filter by status (scheduled, completed, cancelled)
+- `page` (integer, optional) - Page number (default: 1)
+- `limit` (integer, optional) - Items per page (default: 10)
+
+**Example:** `GET /doctors/doc_123456/appointments?date=2024-12-20&status=scheduled&page=1&limit=10`
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Doctor's appointments retrieved successfully",
+  "data": { 
+    "doctor": {
+      "id": "doc_123456",
+      "name": "Dr. Sarah Wilson",
+      "specialization": "General Medicine"
+    },
+    "appointments": [
+      {
+        "id": "apt_345678",
+        "patientId": "pat_789012",
+        "appointmentDate": "2024-12-20",
+        "appointmentTime": "14:30",
+        "duration": 30,
+        "type": "consultation",
+        "reason": "Regular checkup",
+        "status": "scheduled",
+        "patient": {
+          "id": "pat_789012",
+          "name": "John Doe",
+          "age": 34,
+          "avatar": "https://example.com/patient-avatar.jpg"
+        }
+      }
+    ],
+    "summary": {
+      "totalAppointments": 8,
+      "scheduled": 6,
+      "completed": 1,
+      "cancelled": 1
+    },
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 3,
+      "totalItems": 8,
+      "limit": 10
+    }
+  }
+}
+```
+
+---
+
+## 7. Get Patient's Appointments
+
+**Method:** `GET`
+**Endpoint:** `/patients/{patientId}/appointments`
+
+**Path Parameters:**
+- `patientId` (string, required) - The patient ID
+
+**Query Parameters:**
+- `status` (string, optional) - Filter by status
+- `upcoming` (boolean, optional) - Filter for upcoming appointments only
+- `page` (integer, optional) - Page number (default: 1)
+- `limit` (integer, optional) - Items per page (default: 10)
+
+**Example:** `GET /patients/pat_789012/appointments?status=scheduled&upcoming=true`
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Patient's appointments retrieved successfully",
+  "data": {
+    "patient": {
+      "id": "pat_789012",
+      "name": "John Doe",
+      "email": "john.doe@email.com"
+    },
+    "appointments": [
+      {
+        "id": "apt_345678",
+        "doctorId": "doc_123456",
+        "appointmentDate": "2024-12-20",
+        "appointmentTime": "14:30",
+        "duration": 30,
+        "type": "consultation",
+        "reason": "Regular checkup",
+        "status": "scheduled",
+        "doctor": {
+          "id": "doc_123456",
+          "name": "Dr. Sarah Wilson",
+          "specialization": "General Medicine",
+          "hospital": "City General Hospital",
+          "avatar": "https://example.com/doctor-avatar.jpg"
+        }
+      }
+    ],
+    "summary": {
+      "upcomingAppointments": 3,
+      "pastAppointments": 12,
+      "cancelledAppointments": 2
+    }
+  }
+}
+```
+
+---
+
+## 8. Mark Appointment as Completed
+
+**Method:** `PATCH`
+**Endpoint:** `/appointments/{appointmentId}/complete`
+
+**Path Parameters:**
+- `appointmentId` (string, required) - The appointment ID
+
+**Request Body:**
+```json
+{
+  "diagnosis": "Mild tension headache",
+  "prescription": "Ibuprofen 400mg twice daily",
+  "notes": "Patient should return if symptoms persist after one week",
+  "followUpRequired": true,
+  "followUpDate": "2024-12-27"
+}
+```
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointment marked as completed",
+  "data": {
+    "id": "apt_345678",
+    "status": "completed",
+    "completedAt": "2024-12-20T15:00:00Z",
+    "medicalRecord": {
+      "id": "rec_456789",
+      "diagnosis": "Mild tension headache",
+      "prescription": "Ibuprofen 400mg twice daily",
+      "notes": "Patient should return if symptoms persist after one week",
+      "followUpRequired": true,
+      "followUpDate": "2024-12-27"
+    }
+  }
+}
+```
+
+---
+
+## 9. Get All Appointments (with filters)
+
+**Method:** `GET`
+**Endpoint:** `/appointments`
+
+**Query Parameters:**
+- `page` (integer, optional) - Page number (default: 1)
+- `limit` (integer, optional) - Items per page (default: 10, max: 100)
+- `status` (string, optional) - Filter by status
+- `doctorId` (string, optional) - Filter by doctor
+- `patientId` (string, optional) - Filter by patient
+- `date` (string, optional) - Filter by specific date (YYYY-MM-DD)
+- `startDate` (string, optional) - Filter from date (YYYY-MM-DD)
+- `endDate` (string, optional) - Filter to date (YYYY-MM-DD)
+- `type` (string, optional) - Filter by appointment type
+
+**Example:** `GET /appointments?page=1&limit=10&status=scheduled&doctorId=doc_123456&date=2024-12-20`
+
+**Success Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Appointments retrieved successfully",
+  "data": {
+    "appointments": [
+      {
+        "id": "apt_345678",
+        "doctorId": "doc_123456",
+        "patientId": "pat_789012",
+        "appointmentDate": "2024-12-20",
+        "appointmentTime": "14:30",
+        "duration": 30,
+        "type": "consultation",
+        "reason": "Regular checkup",
+        "status": "scheduled",
+        "priority": "normal",
+        "createdAt": "2024-12-15T10:30:00Z",
+        "doctor": {
+          "id": "doc_123456",
+          "name": "Dr. Sarah Wilson",
+          "specialization": "General Medicine",
+          "avatar": "https://example.com/avatar.jpg"
+        },
+        "patient": {
+          "id": "pat_789012",
+          "name": "John Doe",
+          "email": "john.doe@email.com",
+          "phone": "+1234567890"
+        }
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 5,
+      "totalAppointments": 47,
+      "limit": 10,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  }
+}
+```
+
+---
+
+## Status Codes Reference
+
+| Status | Description |
+|--------|-------------|
+| `scheduled` | Appointment is confirmed and scheduled |
+| `completed` | Appointment has been completed |
+| `cancelled` | Appointment has been cancelled |
+| `rescheduled` | Appointment has been moved to a different time |
+| `noShow` | Patient did not show up for the appointment |
+| `inProgress` | Appointment is currently happening |
+
+## Appointment Types
+
+| Type | Description |
+|------|-------------|
+| `consultation` | Regular consultation |
+| `followUp` | Follow-up appointment |
+| `emergency` | Emergency appointment |
+| `routine` | Routine checkup |
+| `procedure` | Medical procedure |
+
+## Priority Levels
+
+| Priority | Description |
+|----------|-------------|
+| `low` | Non-urgent appointment |
+| `normal` | Standard priority |
+| `high` | High priority appointment |
+| `urgent` | Urgent medical attention required |
+
+## Common Error Responses
+
+**400 Bad Request:**
+```json
+{
+  "success": false,
+  "message": "Validation error",
+  "errors": [
+    {
+      "field": "appointmentDate",
+      "message": "Appointment date cannot be in the past"
+    }
+  ]
+}
+```
+
+**401 Unauthorized:**
+```json
+{
+  "success": false,
+  "message": "Unauthorized",
+  "error": {
+    "code": "INVALID_TOKEN",
+    "details": "The provided token is invalid or expired"
+  }
+}
+```
+
+**404 Not Found:**
+```json
+{
+  "success": false,
+  "message": "Appointment not found",
+  "error": {
+    "code": "APPOINTMENT_NOT_FOUND",
+    "details": "No appointment found with ID: apt_345678"
+  }
+}
+```
+
+**409 Conflict:**
+```json
+{
+  "success": false,
+  "message": "Time slot already booked",
+  "error": {
+    "code": "TIME_SLOT_UNAVAILABLE",
+    "details": "The selected time slot is already booked by another patient"
+  }
+}
+```

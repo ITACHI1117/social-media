@@ -201,7 +201,7 @@ function Posts() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-4">
                     {/* Like Button */}
-                    <button
+                    {/* <button
                       onClick={() => handleLike(post.id)}
                       className="flex items-center space-x-1 hover:bg-gray-100 rounded-full p-2 transition-colors group"
                     >
@@ -213,7 +213,7 @@ function Posts() {
                       <span className="text-sm text-gray-600">
                         {post.likesCount || 0}
                       </span>
-                    </button>
+                    </button> */}
 
                     {/* Comment Button */}
                     <button
@@ -222,20 +222,21 @@ function Posts() {
                     >
                       <IoChatbubblesOutline className="w-6 h-6 text-gray-600 group-hover:text-blue-500 transition-colors" />
                       <span className="text-sm text-gray-600">
-                        {post.commentsCount || 0}
+                        Message Jeremy
+                        {/* {post.commentsCount || 0} */}
                       </span>
                     </button>
 
                     {/* Share Button */}
-                    <button className="flex items-center space-x-1 hover:bg-gray-100 rounded-full p-2 transition-colors group">
+                    {/* <button className="flex items-center space-x-1 hover:bg-gray-100 rounded-full p-2 transition-colors group">
                       <IoShareOutline className="w-6 h-6 text-gray-600 group-hover:text-green-500 transition-colors" />
-                    </button>
+                    </button> */}
                   </div>
 
                   {/* Bookmark Button */}
-                  <button className="hover:bg-gray-100 rounded-full p-2 transition-colors">
+                  {/* <button className="hover:bg-gray-100 rounded-full p-2 transition-colors">
                     <IoBookmarkOutline className="w-6 h-6 text-gray-600 hover:text-yellow-500 transition-colors" />
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Like Count and Comments Preview */}

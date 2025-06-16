@@ -45,7 +45,7 @@ function Profile() {
             {/* Cover Image */}
             <div className="relative">
               <img
-                src={food}
+                src={userData.profileImageUrl}
                 alt="Cover"
                 className="w-full h-48 object-cover"
               />
@@ -116,6 +116,9 @@ function Profile() {
                   </h1>
                   <p className="text-blue-500 text-sm font-medium">
                     {userData.email}
+                  </p>
+                  <p className="text-blue-500 text-sm font-medium">
+                    Matric: {userData.matricnumber}
                   </p>
                 </div>
 

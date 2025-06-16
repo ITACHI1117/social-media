@@ -11,6 +11,7 @@ import {
   useDeleteImage,
   useNewPost,
   useUploadImage,
+  useUploadMultipleImages,
   useUser,
 } from "../queries/userQueries";
 import { toast } from "react-toastify";
@@ -18,8 +19,8 @@ import { toast } from "react-toastify";
 function NewPost() {
   const [content, setContent] = useState("");
   const [addedImg, setAddedImg] = useState(false);
-  const [uploadedImg, setUploadedImg] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadedImg, setUploadedImg] = useState([]);
+  const [imagePreview, setImagePreview] = useState([]);
   const imgInputRef = useRef(null);
   const textareaRef = useRef(null);
   let navigate = useNavigate();
@@ -29,34 +30,51 @@ function NewPost() {
   };
 
   const handleImgChange = (e) => {
-    const img = e.target.files[0];
-    if (img) {
-      console.log(img);
+    const imgs = Array.from(e.target.files);
+    if (imgs.length > 0) {
+      console.log(imgs);
       setAddedImg(true);
-      setUploadedImg(img);
-      setImagePreview(URL.createObjectURL(img));
+      setUploadedImg((previousImgs) => [...previousImgs, ...imgs]);
+      const previews = imgs.map((img) => URL.createObjectURL(img));
+      setImagePreview((previousPreviews) => [...previousPreviews, ...previews]);
     }
   };
 
-  const handleRemoveImage = () => {
-    setAddedImg(false);
-    setUploadedImg(null);
-    setImagePreview(null);
-    if (imgInputRef.current) {
-      imgInputRef.current.value = "";
-    }
+  const handleRemoveImage = (index) => {
+    setUploadedImg((prev) => prev.filter((_, i) => i !== index));
+    setImagePreview((prev) => prev.filter((_, i) => i !== index));
+
+    console.log(uploadedImg);
+    console.log(imagePreview.length);
   };
+
+  useEffect(() => {
+    if (imagePreview.length < 1) {
+      setAddedImg(false);
+    }
+  });
 
   // New post query
   const {
     mutate: mutatePost,
     isPending: isPostPending,
     isSuccess: isPostSuccess,
+    isError: isPostError,
     error: postError,
   } = useNewPost();
 
   // upload image query
-  const { mutate, data, isPending, isSuccess, error } = useUploadImage();
+  const { mutate, data, isPending, isSuccess, isError, error } =
+    useUploadImage();
+  // upload multiple image query
+  const {
+    mutate: uploadMoreThanOneImage,
+    data: uploadMoreThanOneImageResponse,
+    isPending: isImagesUploading,
+    isSuccess: isImagesUploadSuccess,
+    isSuccess: isImagesUploadError,
+    error: imagesUploadError,
+  } = useUploadMultipleImages();
 
   // Delete image query
   const {
@@ -78,9 +96,20 @@ function NewPost() {
     }
 
     if (uploadedImg && content.length > 0) {
+      const imageFormData = new FormData();
       try {
         // Upload image first
-        mutate({ file: uploadedImg });
+        if (uploadedImg.length > 1) {
+          uploadedImg.forEach((file) => {
+            imageFormData.append("Files", file);
+          });
+          uploadMoreThanOneImage(imageFormData);
+        } else {
+          uploadedImg.forEach((file) => {
+            imageFormData.append("File", file);
+          });
+          mutate(imageFormData);
+        }
       } catch (error) {
         console.log("Image upload failed:", error);
         toast.error("Failed to upload image");
@@ -90,14 +119,16 @@ function NewPost() {
 
   // append form data and Post
   useEffect(() => {
-    if (isSuccess && data) {
+    if (isSuccess || isImagesUploadSuccess) {
       const formData = new FormData();
       formData.append("Caption", content);
-      formData.append("Images", uploadedImg);
+      uploadedImg.forEach((file) => {
+        formData.append("Images", file);
+      });
       mutatePost(formData);
       navigate("/home");
     }
-  }, [isSuccess]);
+  }, [isSuccess, isImagesUploadSuccess]);
 
   useEffect(() => {
     if (isPostSuccess) {
@@ -112,7 +143,7 @@ function NewPost() {
       });
       navigate("/home");
     }
-    if (postError) {
+    if (isPostError) {
       toast.error("Error creating post", {
         autoClose: 5000,
         hideProgressBar: false,
@@ -122,12 +153,26 @@ function NewPost() {
         progress: undefined,
         theme: "light",
       });
-      console.log(postError);
+      console.log(isPostError);
       if (data?.publicId) {
         deleteImage(data.publicId);
       }
     }
-  }, [isPostSuccess, postError]);
+
+    (isError || isImagesUploadError) &&
+      toast.error("Error uploading image", {
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+
+    console.log(error);
+    console.log(isError);
+  }, [isPostSuccess, isPostError, isError, isImagesUploadError]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -137,7 +182,7 @@ function NewPost() {
     }
   }, [content]);
 
-  const isLoading = isPending || isPostPending;
+  const isLoading = isPending || isPostPending || isImagesUploading;
   const canPost = content.trim().length > 0;
 
   return (
@@ -228,21 +273,27 @@ function NewPost() {
             </div>
 
             {/* Image Preview */}
-            {addedImg && imagePreview && (
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full max-h-96 object-cover"
-                />
-                <button
-                  onClick={handleRemoveImage}
-                  className="absolute top-3 right-3 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full transition-all"
-                >
-                  <IoCloseOutline className="w-5 h-5 text-white" />
-                </button>
-              </div>
-            )}
+            <div className="grid grid-cols-2 gap-0 mt-4">
+              {addedImg &&
+                imagePreview &&
+                imagePreview.map((imagePreview, index) => {
+                  return (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-3 right-3 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full transition-all"
+                      >
+                        <IoCloseOutline className="w-5 h-5 text-white" />
+                      </button>
+                    </div>
+                  );
+                })}
+            </div>
 
             {/* Image Upload Area */}
             {!addedImg && (
@@ -266,6 +317,7 @@ function NewPost() {
             <input
               type="file"
               accept="image/*"
+              multiple
               ref={imgInputRef}
               className="hidden"
               onChange={handleImgChange}
@@ -284,7 +336,7 @@ function NewPost() {
                 <span className="text-sm font-medium text-gray-700">Photo</span>
               </button>
 
-              <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+              {/* <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <svg
                   className="w-5 h-5 text-blue-600"
                   fill="none"
@@ -299,9 +351,9 @@ function NewPost() {
                   />
                 </svg>
                 <span className="text-sm font-medium text-gray-700">Poll</span>
-              </button>
+              </button> */}
 
-              <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+              {/* <button className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <svg
                   className="w-5 h-5 text-yellow-600"
                   fill="none"
@@ -318,7 +370,7 @@ function NewPost() {
                 <span className="text-sm font-medium text-gray-700">
                   Feeling
                 </span>
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -336,7 +388,9 @@ function NewPost() {
           <div className="bg-white rounded-lg p-6 flex flex-col items-center space-y-4">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
             <p className="text-gray-700 font-medium">
-              {isPending ? "Uploading image..." : "Creating post..."}
+              {isPending || isImagesUploading
+                ? "Uploading image..."
+                : "Creating post..."}
             </p>
           </div>
         </div>

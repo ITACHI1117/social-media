@@ -7,6 +7,7 @@ import {
   getUser,
   newPost,
   uploadImage,
+  uploadMultipleImages,
 } from "../services/userServices";
 
 export const useUser = () => {
@@ -42,6 +43,20 @@ export const useMyPosts = () => {
 export const useUploadImage = () => {
   return useMutation({
     mutationFn: (data) => uploadImage(data),
+    onSuccess: (response) => {
+      console.log(response);
+      return response;
+    },
+    onError: (error) => {
+      console.log(error);
+      return error;
+    },
+  });
+};
+
+export const useUploadMultipleImages = () => {
+  return useMutation({
+    mutationFn: (data) => uploadMultipleImages(data),
     onSuccess: (response) => {
       console.log(response);
       return response;

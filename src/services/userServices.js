@@ -81,6 +81,27 @@ async function uploadImage(file) {
   }
 }
 
+// Upload multiple images to the cloud
+async function uploadMultipleImages(data) {
+  const AccessToken = localStorage.getItem("accessToken");
+  try {
+    const response = axiosInstance.post("image/upload-multiple", data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${AccessToken}`,
+      },
+    });
+    console.log(response);
+    return response;
+  } catch (err) {
+    console.log(err);
+    throw {
+      success: false,
+      message: err,
+    };
+  }
+}
+
 // delete image in cloud
 async function deleteImage(id) {
   try {
@@ -124,5 +145,6 @@ export {
   getMyPosts,
   newPost,
   uploadImage,
+  uploadMultipleImages,
   deleteImage,
 };
