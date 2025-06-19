@@ -49,7 +49,7 @@ function ChatNavigationBar({ user2Data }) {
 
           {/* User Profile Section */}
           <div
-            onClick={handleProfileClick}
+            // onClick={handleProfileClick}
             className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 -m-2 transition-colors flex-1 min-w-0"
           >
             {/* Profile Image with Online Status */}

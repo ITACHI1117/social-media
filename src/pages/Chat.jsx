@@ -127,7 +127,7 @@ function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [chat]);
+  }, [message]);
 
   // Send Message
   const handleSend = async (e) => {

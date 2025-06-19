@@ -126,14 +126,21 @@ function ChatsList() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filteredChats.map((chat) => (
-              <ChatCard
-                key={chat.id}
-                chat={chat}
-                handleChat={handleChat}
-                searchQuery={searchQuery}
-              />
-            ))}
+            {filteredChats.map((chat) => {
+              const getUerId =
+                userData.id == chat.participants[0]
+                  ? chat.participants[1]
+                  : chat.participants[0];
+              return (
+                <ChatCard
+                  key={chat.id}
+                  chat={chat}
+                  getUerId={getUerId}
+                  handleChat={handleChat}
+                  searchQuery={searchQuery}
+                />
+              );
+            })}
           </div>
         )}
       </div>

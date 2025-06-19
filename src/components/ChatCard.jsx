@@ -1,16 +1,18 @@
 import React from "react";
 import { formatRelativeDate } from "../utils/dateTimeFormats";
-import { useGetUserById } from "../queries/userQueries";
+import { useGetUserById, useUser } from "../queries/userQueries";
 import profileImg from "../assets/student.jpg"; // fallback profile image
 
-function ChatCard({ chat, handleChat }) {
+function ChatCard({ chat, getUerId, handleChat }) {
+  // const { data: LoggedInUser } = useUser();
+
   const {
     data: chatUserData,
     isSuccess,
     isPending,
     isError,
     error,
-  } = useGetUserById(chat.participants[1]);
+  } = useGetUserById(getUerId);
 
   const formatLastMessage = (message, isOwn = false) => {
     if (isOwn) return message;
