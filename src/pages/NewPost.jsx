@@ -278,7 +278,7 @@ function NewPost() {
                 imagePreview &&
                 imagePreview.map((imagePreview, index) => {
                   return (
-                    <div className="relative">
+                    <div key={index} className="relative">
                       <img
                         src={imagePreview}
                         alt="Preview"

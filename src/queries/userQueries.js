@@ -5,6 +5,7 @@ import {
   getMyPosts,
   getPosts,
   getUser,
+  getUserByID,
   newPost,
   uploadImage,
   uploadMultipleImages,
@@ -14,6 +15,7 @@ export const useUser = () => {
   return useQuery({ queryKey: [`user`], queryFn: getUser, initialData: [] });
 };
 
+//
 export const useEditProfile = () => {
   return useMutation({
     mutationFn: (data) => editProfile(data),
@@ -25,6 +27,14 @@ export const useEditProfile = () => {
       console.log(error);
       return error;
     },
+  });
+};
+
+// get user by id query
+export const useGetUserById = (id) => {
+  return useQuery({
+    queryKey: ["userById", id],
+    queryFn: () => getUserByID(id),
   });
 };
 

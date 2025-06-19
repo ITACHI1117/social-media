@@ -26,13 +26,13 @@ function BottomNavigationBar() {
       label: "Create",
       isSpecial: true,
     },
-    // {
-    //   id: 3,
-    //   path: null,
-    //   icon: IoChatbubblesOutline,
-    //   label: "Chats",
-    //   isSpecial: undefined,
-    // },
+    {
+      id: 3,
+      path: "/chats",
+      icon: IoChatbubblesOutline,
+      label: "Chats",
+      isSpecial: false,
+    },
   ];
 
   const handelClick = () => {
@@ -108,7 +108,7 @@ function BottomNavigationBar() {
               </Link>
             );
           })}
-          <div
+          {/* <div
             // key={item.path}
             // to={item.path}
             onClick={handelClick}
@@ -124,7 +124,7 @@ function BottomNavigationBar() {
             >
               Chats
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

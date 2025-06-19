@@ -8,74 +8,119 @@ import {
 import { HiOutlineDotsVertical } from "react-icons/hi";
 import ChatNavigationBar from "../components/ChatNavigationBar";
 import { useState, useRef, useEffect } from "react";
+import { useParams } from "react-router";
+import { useGetUserById, useUser } from "../queries/userQueries";
+import { SendMessage } from "../utils/sendMessage";
+import { getChatID } from "../utils/getChatID";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "../../firebaseConfig";
 
 function Chat() {
   const MyId = 22;
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [chat, setChats] = useState([]);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  const chat = [
-    {
-      id: 1,
-      userid: 11,
-      name: "John Doe",
-      message: "Hey! How's your day going?",
-      time: "10:00 AM",
-      status: "delivered",
-    },
-    {
-      id: 2,
-      userid: 22,
-      name: "You",
-      message:
-        "It's going well, thanks for asking! Just finished my morning workout 💪",
-      time: "10:01 AM",
-      status: "read",
-    },
-    {
-      id: 3,
-      userid: 11,
-      name: "John Doe",
-      message: "That's awesome! I should probably start working out too 😅",
-      time: "10:02 AM",
-      status: "delivered",
-    },
-    {
-      id: 4,
-      userid: 22,
-      name: "You",
-      message: "You definitely should! Want to join me tomorrow?",
-      time: "10:03 AM",
-      status: "read",
-    },
-    {
-      id: 5,
-      userid: 11,
-      name: "John Doe",
-      message: "Sounds great! What time?",
-      time: "10:04 AM",
-      status: "delivered",
-    },
-    {
-      id: 6,
-      userid: 22,
-      name: "You",
-      message: "How about 7 AM? I know it's early but the gym is less crowded",
-      time: "10:05 AM",
-      status: "read",
-    },
-    {
-      id: 7,
-      userid: 11,
-      name: "John Doe",
-      message: "Perfect! See you there 👍",
-      time: "10:06 AM",
-      status: "delivered",
-    },
-  ];
+  // get logged in user
+  const { data: userData, isPending, isRefetchError, error } = useUser();
 
+  // get user2 id from params
+  let params = useParams();
+  useEffect(() => {
+    console.log(params.userId);
+  }, [params]);
+
+  // get user2 data by id
+  const {
+    data: user2Data,
+    isSuccess,
+    isError,
+    error: user2Dataerror,
+  } = useGetUserById(params.userId);
+
+  // const chat = [
+  //   {
+  //     id: 1,
+  //     userid: 11,
+  //     name: "John Doe",
+  //     message: "Hey! How's your day going?",
+  //     time: "10:00 AM",
+  //     status: "delivered",
+  //   },
+  //   {
+  //     id: 2,
+  //     userid: 22,
+  //     name: "You",
+  //     message:
+  //       "It's going well, thanks for asking! Just finished my morning workout 💪",
+  //     time: "10:01 AM",
+  //     status: "read",
+  //   },
+  //   {
+  //     id: 3,
+  //     userid: 11,
+  //     name: "John Doe",
+  //     message: "That's awesome! I should probably start working out too 😅",
+  //     time: "10:02 AM",
+  //     status: "delivered",
+  //   },
+  //   {
+  //     id: 4,
+  //     userid: 22,
+  //     name: "You",
+  //     message: "You definitely should! Want to join me tomorrow?",
+  //     time: "10:03 AM",
+  //     status: "read",
+  //   },
+  //   {
+  //     id: 5,
+  //     userid: 11,
+  //     name: "John Doe",
+  //     message: "Sounds great! What time?",
+  //     time: "10:04 AM",
+  //     status: "delivered",
+  //   },
+  //   {
+  //     id: 6,
+  //     userid: 22,
+  //     name: "You",
+  //     message: "How about 7 AM? I know it's early but the gym is less crowded",
+  //     time: "10:05 AM",
+  //     status: "read",
+  //   },
+  //   {
+  //     id: 7,
+  //     userid: 11,
+  //     name: "John Doe",
+  //     message: "Perfect! See you there 👍",
+  //     time: "10:06 AM",
+  //     status: "delivered",
+  //   },
+  // ];
+
+  // generate unique chat id
+  const chatId = getChatID(userData.id, params.userId);
+
+  useEffect(() => {
+    // Firebase queries and function to get and send messages
+    const q = query(
+      collection(db, "chats", chatId, "messages"),
+      orderBy("timestamp")
+    );
+
+    onSnapshot(q, (snapshot) => {
+      const messages = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setChats(messages);
+      // console.log(messages);
+    });
+  }, [message]);
+
+  // scroll doen to see latest messages FN
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -84,21 +129,20 @@ function Chat() {
     scrollToBottom();
   }, [chat]);
 
-  const handleSend = () => {
-    if (message.trim()) {
-      // Here you would typically send the message
-      console.log("Sending message:", message);
-      setMessage("");
-      inputRef.current?.focus();
-    }
+  // Send Message
+  const handleSend = async (e) => {
+    e.preventDefault();
+    SendMessage(chatId, userData.id, params.userId, message);
+    setMessage("");
+    inputRef.current?.focus();
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
+  // const handleKeyPress = (e) => {
+  //   if (e.key === "Enter" && !e.shiftKey) {
+  //     e.preventDefault();
+  //     handleSend();
+  //   }
+  // };
 
   const formatTime = (timeString) => {
     return timeString;
@@ -133,7 +177,7 @@ function Chat() {
   return (
     <div className="flex flex-col h-screen bg-gray-100">
       {/* Chat Header */}
-      <ChatNavigationBar />
+      <ChatNavigationBar user2Data={user2Data} />
 
       {/* Messages Container */}
       <div className="flex-1 overflow-hidden">
@@ -147,12 +191,7 @@ function Chat() {
 
           {/* Messages */}
           {chat.map((item, index) => {
-            const isMyMessage = item.userid === MyId;
-            const showTime =
-              index === 0 ||
-              chat[index - 1].userid !== item.userid ||
-              index === chat.length - 1;
-
+            const isMyMessage = item.senderId === userData.id;
             return (
               <div key={`${item.id}-${index}`} className="mb-2">
                 <div
@@ -168,13 +207,13 @@ function Chat() {
                     }`}
                   >
                     <p className="text-sm leading-relaxed break-words">
-                      {item.message}
+                      {item.text}
                     </p>
                   </div>
                 </div>
 
                 {/* Message Time and Status */}
-                {showTime && (
+                {/* {showTime && (
                   <div
                     className={`flex items-center mt-1 ${
                       isMyMessage ? "justify-end" : "justify-start"
@@ -213,7 +252,7 @@ function Chat() {
                       )}
                     </div>
                   </div>
-                )}
+                )} */}
               </div>
             );
           })}
@@ -248,9 +287,9 @@ function Chat() {
       <div className="bg-white border-t border-gray-200 px-4 py-3">
         <div className="flex items-end space-x-3">
           {/* Attachment Button */}
-          <button className="p-2 text-gray-500 hover:text-blue-500 transition-colors">
+          {/* <button className="p-2 text-gray-500 hover:text-blue-500 transition-colors">
             <IoAttachOutline className="w-6 h-6" />
-          </button>
+          </button> */}
 
           {/* Message Input Container */}
           <div className="flex-1 bg-gray-100 rounded-2xl px-4 py-2 min-h-[44px] max-h-32">
@@ -259,7 +298,7 @@ function Chat() {
                 ref={inputRef}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                // onKeyPress={handleKeyPress}
                 placeholder="Type a message..."
                 className="flex-1 bg-transparent resize-none outline-none text-gray-800 placeholder-gray-500 py-2 max-h-20"
                 rows="1"
@@ -275,19 +314,27 @@ function Chat() {
               />
 
               {/* Emoji Button */}
-              <button className="p-1 text-gray-500 hover:text-blue-500 transition-colors">
+              {/* <button className="p-1 text-gray-500 hover:text-blue-500 transition-colors">
                 <IoHappyOutline className="w-5 h-5" />
-              </button>
+              </button> */}
 
               {/* Image Button */}
-              <button className="p-1 text-gray-500 hover:text-blue-500 transition-colors">
+              {/* <button className="p-1 text-gray-500 hover:text-blue-500 transition-colors">
                 <IoImageOutline className="w-5 h-5" />
-              </button>
+              </button> */}
             </div>
           </div>
 
+          {/* Send Message */}
+          <button
+            onClick={(e) => handleSend(e)}
+            className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg"
+          >
+            <VscSend className="w-5 h-5" />
+          </button>
+
           {/* Send/Voice Button */}
-          {message.trim() ? (
+          {/* {message.trim() ? (
             <button
               onClick={handleSend}
               className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg"
@@ -298,7 +345,7 @@ function Chat() {
             <button className="p-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors shadow-lg">
               <IoMicOutline className="w-5 h-5" />
             </button>
-          )}
+          )} */}
         </div>
       </div>
     </div>

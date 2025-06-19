@@ -60,7 +60,7 @@ createRoot(document.getElementById("root")).render(
               }
             />
             <Route
-              path="chat"
+              path="/chat/:userId"
               element={
                 <ProtectedRoute>
                   <Chat />
@@ -70,9 +70,9 @@ createRoot(document.getElementById("root")).render(
             <Route
               path="chats"
               element={
-                <ProtectedRoute>
-                  <ChatsList />
-                </ProtectedRoute>
+                // <ProtectedRoute>
+                <ChatsList />
+                // </ProtectedRoute>
               }
             />
             <Route

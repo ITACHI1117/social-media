@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { API } from "./url";
 
+// Get logged In User
 async function getUser() {
   try {
     const user = await axiosInstance.get("/UserProfile");
@@ -13,6 +14,19 @@ async function getUser() {
     throw {
       success: false,
       message: err.response,
+    };
+  }
+}
+
+async function getUserByID(id) {
+  try {
+    const response = await axiosInstance.get(`UserProfile/${id}`);
+    return response.data;
+  } catch (err) {
+    console.log(err);
+    throw {
+      success: false,
+      message: err.message,
     };
   }
 }
@@ -140,6 +154,7 @@ async function newPost(postData) {
 
 export {
   getUser,
+  getUserByID,
   editProfile,
   getPosts,
   getMyPosts,
